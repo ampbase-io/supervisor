@@ -117,12 +117,10 @@ sha256sum -c checksums.txt
 User guides, configuration reference, and the supervisor's role in the
 Ampbase architecture live at [ampbase.io/docs](https://ampbase.io/docs).
 
-## Issues
+## Support
 
-The supervisor source lives in the Ampbase monorepo. File issues and
-feature requests against
-[`ampbase-io/ampbase`](https://github.com/ampbase-io/ampbase/issues) rather
-than this repo, which only carries the image build.
+For bug reports, feature requests, and questions, contact
+[support@ampbase.io](mailto:support@ampbase.io).
 
 ## License
 
