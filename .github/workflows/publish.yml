@@ -3,9 +3,11 @@ name: Publish Supervisor Image
 # Triggered by the monorepo's supervisor-release workflow after the
 # release binaries have been uploaded to Tigris (ampbase.io/releases/...).
 # `workflow_dispatch` is exposed for ad-hoc re-runs against any existing
-# released version — no `:latest` tag is produced from manual runs, and
-# the cosign signing + provenance steps are skipped so manual probes
-# can't pollute the supply chain attestations.
+# released version; `:latest` is only published on the automated path
+# so a manual re-run of an older version can't move :latest backwards.
+# Signing and provenance run on both paths — re-signing the same digest
+# is safe (Rekor records both) and we want manual re-runs to ship a
+# verifiable image just like the automated path.
 on:
   repository_dispatch:
     types: [supervisor-release]
@@ -102,14 +104,9 @@ jobs:
           provenance: mode=max
           sbom: true
 
-      # Sign + attest only on the automated path. Manual dispatches are
-      # for re-runs / metadata probes and should not produce additional
-      # signatures on top of the canonical release.
       - uses: sigstore/cosign-installer@v3
-        if: github.event_name == 'repository_dispatch'
 
       - name: Sign image
-        if: github.event_name == 'repository_dispatch'
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
@@ -117,7 +114,6 @@ jobs:
           echo "$TAGS" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
       - uses: actions/attest-build-provenance@v2
-        if: github.event_name == 'repository_dispatch'
         with:
           subject-name: ghcr.io/ampbase-io/supervisor
           subject-digest: ${{ steps.build.outputs.digest }}
